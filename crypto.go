@@ -69,6 +69,32 @@ func decryptConversation(block cipher.Block, encrypted Conversation) (decrypted 
 	return decrypted, nil
 
 }
+func decryptMessage(block cipher.Block, encrypted Message) (decrypted Message, err error) {
+    decrypted.ConversationID = encrypted.ConversationID
+    decrypted.ID = encrypted.ID
+    decrypted.Read = encrypted.Read
+    decrypted.Seen = encrypted.Seen
+    decrypted.Type = encrypted.Type
+
+	// Removes miliiseconds from timestamp
+	decrypted.Timestamp = encrypted.Timestamp / 1000 >> 0 // Remove ms
+	decrypted.Timestamp = encrypted.Timestamp * 1000      // Add back zero timestamp
+
+    decrypted.MimeType = decrypt(block, encrypted.MimeType)
+
+    // TODO handle emojis
+
+    decrypted.Data = decrypt(block, encrypted.Data)
+    decrypted.From = decrypt(block, encrypted.From)
+
+    decrypted.DeviceID = encrypted.DeviceID
+    if decrypted.DeviceID == "" {
+        decrypted.DeviceID = encrypted.ID
+    }
+
+	return decrypted, nil
+
+}
 
 // https://gist.github.com/yingray/57fdc3264b1927ef0f984b533d63abab
 func Ase256(plaintext string, key string, iv string, blockSize int) string {

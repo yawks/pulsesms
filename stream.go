@@ -1,6 +1,7 @@
 package pulsesms
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -10,35 +11,28 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+type NotificationMessage struct {
+	Operation string  `json:"operation,omitempty"`
+	Content   Message `json:"content,omitempty"`
+}
+
+type WSMessage struct {
+	Identifier string              `json:"identifier,omitempty"`
+	Message    NotificationMessage `json:"message,omitempty"`
+}
+
 func (c *Client) Stream() {
 
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
 
 	url := "wss://api.pulsesms.app/api/v1/stream?account_id=" + c.accountID
-	conn, resp, err := websocket.DefaultDialer.Dial(url, nil)
+	conn, _, err := websocket.DefaultDialer.Dial(url, nil)
 	if err != nil {
 		panic(err)
 	}
 	defer conn.Close()
 
-	fmt.Println(resp.Status)
-	fmt.Println(resp.StatusCode)
-	for k, v := range resp.Header {
-		fmt.Println(k, v)
-	}
-
-	for k, v := range resp.Request.Header {
-		fmt.Println(k, v)
-	}
-
-	conn.SetPingHandler(func(d string) error {
-		fmt.Println("ping")
-		return conn.WriteControl(websocket.PongMessage, []byte{}, time.Now().Add(time.Minute*1))
-
-	})
-
-	fmt.Println("subscribing")
 	subscribe := map[string]interface{}{
 		"command":    "subscribe",
 		"identifier": "{\"channel\":\"NotificationsChannel\"}",
@@ -62,7 +56,7 @@ func (c *Client) Stream() {
 				fmt.Println("read:", err)
 				return
 			}
-			fmt.Printf("recv: %s", message)
+			c.handleMessage(message)
 		}
 	}()
 
@@ -89,4 +83,31 @@ func (c *Client) Stream() {
 			return
 		}
 	}
+}
+
+func (c *Client) handleMessage(msg []byte) {
+	wm := &WSMessage{}
+	err := json.Unmarshal(msg, wm)
+	if err != nil {
+		fmt.Println("skipping message invalid message")
+	}
+
+	switch wm.Message.Operation {
+	case "added_message":
+		fmt.Println("received new message")
+		decrypted, err := decryptMessage(c.crypto.cipher, wm.Message.Content)
+		if err != nil {
+			panic(err)
+		}
+        fmt.Println(decrypted.ConversationID)
+        fmt.Println(decrypted.Data)
+
+	case "removed_message":
+		fmt.Println("message removed, ignoring")
+	case "read_conversation":
+		fmt.Println("conversation read, ignoring")
+	case "updated_conversation":
+		fmt.Println("conversation updated, ignoring")
+	}
+
 }

@@ -19,10 +19,11 @@ func main() {
 		fmt.Println(err)
 	}
 
-	err = c.List()
+    convos, err := c.List()
 	if err != nil {
 		fmt.Println(err)
 	}
+    fmt.Println(convos)
 
     fmt.Println("streaming")
 	c.Stream()

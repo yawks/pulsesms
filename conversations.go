@@ -16,7 +16,7 @@ type Conversation struct {
 	PhoneNumbers string `json:"phone_numbers,omitempty"`
 }
 
-func (c *Client) List() error {
+func (c *Client) List() ([]Conversation, error) {
 	index := "index_public_unarchived"
 
 	endpoint := c.getUrl(EndpointConversations)
@@ -30,24 +30,28 @@ func (c *Client) List() error {
 
 	if err != nil {
 		fmt.Printf("%v: %s", resp.StatusCode(), resp.Status())
-		return err
+		return nil, err
+
 	}
 
 	convos := []Conversation{}
 
 	err = json.Unmarshal(resp.Body(), &convos)
 	if err != nil {
-		return fmt.Errorf("failed to unmarshall conversations: %v", err)
+		return nil, fmt.Errorf("failed to unmarshall conversations: %v", err)
 	}
 
+	result := []Conversation{}
 	for _, conv := range convos {
 		decrypted, err := decryptConversation(c.crypto.cipher, conv)
 		if err != nil {
 			panic(err)
 		}
 		fmt.Printf("%+v\n", decrypted)
+		result = append(result, decrypted)
+
 	}
 
-	return nil
+	return result, nil
 
 }
