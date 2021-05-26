@@ -19,8 +19,11 @@ func main() {
 		fmt.Println(err)
 	}
 
-    err = c.List()
+	err = c.List()
 	if err != nil {
 		fmt.Println(err)
 	}
+
+    fmt.Println("streaming")
+	c.Stream()
 }
