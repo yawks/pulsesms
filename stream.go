@@ -49,9 +49,7 @@ func (c *Client) Stream() {
 	go func() {
 		defer close(done)
 		for {
-			fmt.Println("reading message")
-			ty, message, err := conn.ReadMessage()
-			fmt.Println("type", ty)
+			_, message, err := conn.ReadMessage()
 			if err != nil {
 				fmt.Println("read:", err)
 				return
@@ -95,19 +93,15 @@ func (c *Client) handleMessage(msg []byte) {
 	switch wm.Message.Operation {
 	case "added_message":
 		fmt.Println("received new message")
-		decrypted, err := decryptMessage(c.crypto.cipher, wm.Message.Content)
+		m := wm.Message.Content
+		err := decryptMessage(c.crypto.cipher, &m)
 		if err != nil {
 			panic(err)
 		}
-        fmt.Println(decrypted.ConversationID)
-        fmt.Println(decrypted.Data)
 
 	case "removed_message":
-		fmt.Println("message removed, ignoring")
 	case "read_conversation":
-		fmt.Println("conversation read, ignoring")
 	case "updated_conversation":
-		fmt.Println("conversation updated, ignoring")
 	}
 
 }

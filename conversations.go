@@ -16,7 +16,7 @@ type Conversation struct {
 	PhoneNumbers string `json:"phone_numbers,omitempty"`
 }
 
-func (c *Client) List() ([]Conversation, error) {
+func (c *Client) ListConversations() ([]Conversation, error) {
 	index := "index_public_unarchived"
 
 	endpoint := c.getUrl(EndpointConversations)
@@ -43,12 +43,11 @@ func (c *Client) List() ([]Conversation, error) {
 
 	result := []Conversation{}
 	for _, conv := range convos {
-		decrypted, err := decryptConversation(c.crypto.cipher, conv)
+		err := decryptConversation(c.crypto.cipher, &conv)
 		if err != nil {
-			panic(err)
+			return nil, fmt.Errorf("failed to decrypt conversation %v", err)
 		}
-		fmt.Printf("%+v\n", decrypted)
-		result = append(result, decrypted)
+		result = append(result, conv)
 
 	}
 

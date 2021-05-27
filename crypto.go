@@ -56,43 +56,35 @@ func decrypt(block cipher.Block, data string) string {
 
 }
 
-func decryptConversation(block cipher.Block, encrypted Conversation) (decrypted Conversation, err error) {
+func decryptConversation(block cipher.Block, convo *Conversation) (err error) {
 
 	// Removes miliiseconds from timestamp
-	decrypted.Timestamp = encrypted.Timestamp / 1000 >> 0 // Remove ms
-	decrypted.Timestamp = encrypted.Timestamp * 1000      // Add back zero timestamp
-	decrypted.DeviceId = encrypted.DeviceId
-	decrypted.FolderId = encrypted.FolderId
+	convo.Timestamp = convo.Timestamp / 1000 >> 0 // Remove ms
+	convo.Timestamp = convo.Timestamp * 1000      // Add back zero timestamp
 
-	decrypted.Title = decrypt(block, encrypted.Title)
-	decrypted.PhoneNumbers = decrypt(block, encrypted.PhoneNumbers)
-	return decrypted, nil
+	convo.Title = decrypt(block, convo.Title)
+	convo.PhoneNumbers = decrypt(block, convo.PhoneNumbers)
+	return nil
 
 }
-func decryptMessage(block cipher.Block, encrypted Message) (decrypted Message, err error) {
-    decrypted.ConversationID = encrypted.ConversationID
-    decrypted.ID = encrypted.ID
-    decrypted.Read = encrypted.Read
-    decrypted.Seen = encrypted.Seen
-    decrypted.Type = encrypted.Type
+func decryptMessage(block cipher.Block, m *Message) (err error) {
 
 	// Removes miliiseconds from timestamp
-	decrypted.Timestamp = encrypted.Timestamp / 1000 >> 0 // Remove ms
-	decrypted.Timestamp = encrypted.Timestamp * 1000      // Add back zero timestamp
+	m.Timestamp = m.Timestamp / 1000 >> 0 // Remove ms
+	m.Timestamp = m.Timestamp * 1000      // Add back zero timestamp
 
-    decrypted.MimeType = decrypt(block, encrypted.MimeType)
+	m.MimeType = decrypt(block, m.MimeType)
 
-    // TODO handle emojis
+	// TODO handle emojis
 
-    decrypted.Data = decrypt(block, encrypted.Data)
-    decrypted.From = decrypt(block, encrypted.From)
+	m.Data = decrypt(block, m.Data)
+	m.From = decrypt(block, m.From)
 
-    decrypted.DeviceID = encrypted.DeviceID
-    if decrypted.DeviceID == "" {
-        decrypted.DeviceID = encrypted.ID
-    }
+	if m.DeviceID == 0 {
+		m.DeviceID = m.ID
+	}
 
-	return decrypted, nil
+	return nil
 
 }
 
