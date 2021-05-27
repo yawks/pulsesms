@@ -40,6 +40,16 @@ func (c *Client) GetMessages(conversationID int, offset int) ([]Message, error) 
 		return nil, err
 	}
 
-	return msgs, nil
+	result := []Message{}
+	for _, m := range msgs {
+		err := decryptMessage(c.crypto.cipher, &m)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decrypt message %v", err)
+		}
+		result = append(result, m)
+
+	}
+
+	return result, nil
 
 }
