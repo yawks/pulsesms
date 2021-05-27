@@ -96,8 +96,10 @@ func (c *Client) handleMessage(msg []byte) {
 		m := wm.Message.Content
 		err := decryptMessage(c.crypto.cipher, &m)
 		if err != nil {
-			panic(err)
+			fmt.Println("failed to decrypt message:", err)
+			return
 		}
+		go c.messageHandler(m)
 
 	case "removed_message":
 	case "read_conversation":
