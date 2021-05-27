@@ -10,6 +10,6 @@ improvements may be made to extend the bridge functionality or become more
 useful overall.
 
 
-See [the example](./exampl/main.go) for how to use the client.
+See [the example](./example/main.go) for how to use the client.
 
 
