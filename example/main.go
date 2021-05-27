@@ -6,7 +6,6 @@ import (
 	"github.com/treethought/pulsesms"
 )
 
-
 const (
 	username = "me@example.com"
 	password = "password"
@@ -20,13 +19,13 @@ func main() {
 	}
 
 	c.SetMessageHandler(func(m pulsesms.Message) {
-        fmt.Printf("processing msg %v: %s", m.ID, m.Data)
-        fmt.Println("getting convo msgs:", m.ConversationID)
-        msgs, err := c.GetMessages(m.ConversationID, 0)
-        if err != nil {
-            panic(err)
-        }
-        fmt.Println(msgs)
+		fmt.Printf("processing msg %v: %s", m.ID, m.Data)
+		fmt.Println("getting convo msgs:", m.ConversationID)
+		msgs, err := c.GetMessages(m.ConversationID, 0)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println(msgs)
 	})
 
 	convos, err := c.ListConversations()
