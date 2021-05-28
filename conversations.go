@@ -5,16 +5,21 @@ import (
 	"fmt"
 )
 
+// ConversationID is the internal ID of a group or one-on-one chat / thread
+type ConversationID = int
+
+
 type Conversation struct {
-	DeviceId     int    `json:"device_id,omitempty"`
-	FolderId     int    `json:"folder_id,omitempty"`
-	Read         bool   `json:"read,omitempty"`
-	Timestamp    int64  `json:"timestamp,omitempty"`
-	Title        string `json:"title,omitempty"`
-	Archive      bool   `json:"archive,omitempty"`
-	Mute         bool   `json:"mute,omitempty"`
-	PhoneNumbers string `json:"phone_numbers,omitempty"`
-	Snippet      string `json:"snippet,omitempty"`
+	ID           ConversationID `json:"id,omitempty"`
+	DeviceId     int            `json:"device_id,omitempty"`
+	FolderId     int            `json:"folder_id,omitempty"`
+	Read         bool           `json:"read,omitempty"`
+	Timestamp    int64          `json:"timestamp,omitempty"`
+	Title        string         `json:"title,omitempty"`
+	Archive      bool           `json:"archive,omitempty"`
+	Mute         bool           `json:"mute,omitempty"`
+	PhoneNumbers string         `json:"phone_numbers,omitempty"`
+	Snippet      string         `json:"snippet,omitempty"`
 }
 
 func (c *Client) ListConversations() ([]Conversation, error) {
@@ -25,8 +30,8 @@ func (c *Client) ListConversations() ([]Conversation, error) {
 	path := fmt.Sprintf("%s/%s", endpoint, index)
 
 	resp, err := c.api.R().
-		SetQueryParam("account_id", c.accountID).
-		SetQueryParam("limit", fmt.Sprint(75)).
+		SetQueryParam("account_id", fmt.Sprint(c.accountID)).
+		SetQueryParam("limit", fmt.Sprint(75).
 		Get(path)
 
 	if err != nil {
@@ -77,5 +82,6 @@ func (c *Client) updateConversation(conversationID int, snippet string, timestam
 		fmt.Printf(string(resp.Body()))
 		return err
 	}
+	fmt.Println("updated conversation", conversationID)
 	return nil
 }

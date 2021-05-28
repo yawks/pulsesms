@@ -7,41 +7,47 @@ import (
 	"time"
 )
 
+// MessageID is the internal ID of a Pulse SMS message
+type MessageID = int
+
+// DeviceID is the generated internal ID of the device used to interact with a PulseSMS account
+type DeviceID = int
+
 type Message struct {
-	ID             int    `json:"id,omitempty"`
-	ConversationID int    `json:"conversation_id,omitempty"`
-	DeviceID       int    `json:"device_id,omitempty"`
-	Type           int    `json:"type,omitempty"`
-	Data           string `json:"data,omitempty"`
-	Timestamp      int64  `json:"timestamp,omitempty"`
-	MimeType       string `json:"mime_type,omitempty"`
-	Read           bool   `json:"read,omitempty"`
-	Seen           bool   `json:"seen,omitempty"`
-	From           string `json:"from,omitempty"`
-	Archive        bool   `json:"archive,omitempty"`
-	SentDevice     int    `json:"sent_device,omitempty"`
-	SimStamp       string `json:"sim_stamp,omitempty"`
-	Snippet        string `json:"snippet,omitempty"`
+	ID             MessageID      `json:"id,omitempty"`
+	ConversationID ConversationID `json:"conversation_id,omitempty"`
+	DeviceID       DeviceID       `json:"device_id,omitempty"`
+	Type           int            `json:"type,omitempty"`
+	Data           string         `json:"data,omitempty"`
+	Timestamp      int64          `json:"timestamp,omitempty"`
+	MimeType       string         `json:"mime_type,omitempty"`
+	Read           bool           `json:"read,omitempty"`
+	Seen           bool           `json:"seen,omitempty"`
+	From           string         `json:"from,omitempty"`
+	Archive        bool           `json:"archive,omitempty"`
+	SentDevice     DeviceID       `json:"sent_device,omitempty"`
+	SimStamp       string         `json:"sim_stamp,omitempty"`
+	Snippet        string         `json:"snippet,omitempty"`
 }
 
 type sendMessageRequest struct {
-	AccountID            string `json:"account_id,omitempty"`
-	Data                 string `json:"data,omitempty"`
-	DeviceConversationID int    `json:"device_conversation_id,omitempty"`
-	DeviceID             int    `json:"device_id,omitempty"`
-	MessageType          int    `json:"message_type,omitempty"`
-	MimeType             string `json:"mime_type,omitempty"`
-	Read                 bool   `json:"read,omitempty"`
-	Seen                 bool   `json:"seen,omitempty"`
-	SentDevice           int    `json:"sent_device"`
-	Timestamp            int64  `json:"timestamp,omitempty"`
+	AccountID            AccountID `json:"account_id,omitempty"`
+	Data                 string    `json:"data,omitempty"`
+	DeviceConversationID int       `json:"device_conversation_id,omitempty"`
+	DeviceID             DeviceID  `json:"device_id,omitempty"`
+	MessageType          int       `json:"message_type,omitempty"`
+	MimeType             string    `json:"mime_type,omitempty"`
+	Read                 bool      `json:"read,omitempty"`
+	Seen                 bool      `json:"seen,omitempty"`
+	SentDevice           DeviceID  `json:"sent_device"`
+	Timestamp            int64     `json:"timestamp,omitempty"`
 }
 
 type updateConversationRequest struct {
-	AccountID string `json:"account_id,omitempty"`
-	Read      bool   `json:"read,omitempty"`
-	Timestamp int64  `json:"timestamp,omitempty"`
-	Snippet   string `json:"snippet,omitempty"`
+	AccountID AccountID `json:"account_id,omitempty"`
+	Read      bool      `json:"read,omitempty"`
+	Timestamp int64     `json:"timestamp,omitempty"`
+	Snippet   string    `json:"snippet,omitempty"`
 }
 
 func generateID() int {
@@ -61,7 +67,7 @@ func (c *Client) GetMessages(conversationID int, offset int) ([]Message, error) 
 	endpoint := c.getUrl(EndpointMessages)
 
 	resp, err := c.api.R().
-		SetQueryParam("account_id", c.accountID).
+		SetQueryParam("account_id", fmt.Sprint(c.accountID)).
 		SetQueryParam("conversation_id", fmt.Sprint(conversationID)).
 		SetQueryParam("offset", fmt.Sprint(offset)).
 		SetQueryParam("limit", fmt.Sprint(limit)).
@@ -116,9 +122,9 @@ func (c *Client) SendMessage(data string, conversationID int) error {
 		MessageType:          2,
 		Timestamp:            timestamp,
 		MimeType:             mimetype,
-		Read:                 true,
-		Seen:                 true,
-		SentDevice:           0,
+		Read:                 false,
+		Seen:                 false,
+		SentDevice:           1,
 	}
 
 	endpoint := c.getUrl(EndpointAddMessage)
@@ -131,6 +137,9 @@ func (c *Client) SendMessage(data string, conversationID int) error {
 		fmt.Printf("%v: %s\n", resp.StatusCode(), resp.Status())
 		return err
 	}
+	fmt.Println("sent message")
+	fmt.Println(resp.StatusCode(), resp.Status())
+	fmt.Println(string(resp.Body()))
 
 	err = c.updateConversation(conversationID, encSnippet, timestamp)
 	if err != nil {

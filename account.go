@@ -5,13 +5,17 @@ import (
 	"fmt"
 )
 
+// AccountID is a PulseSMS account ID
+// this reflects the Pulse SMS subscriber, not a contact or "sms user"
+type AccountID string
+
 type loginResponse struct {
-	AccountID   string `json:"account_id,omitempty"`
-	Salt1       string `json:"salt1,omitempty"`
-	Salt2       string `json:"salt2,omitempty"`
-	PhoneNumber string `json:"phone_number,omitempty"`
-	Name        string `json:"name,omitempty"`
-	Passcode    string `json:"passcode,omitempty"`
+	AccountID   AccountID `json:"account_id,omitempty"`
+	Salt1       string    `json:"salt1,omitempty"`
+	Salt2       string    `json:"salt2,omitempty"`
+	PhoneNumber string    `json:"phone_number,omitempty"`
+	Name        string    `json:"name,omitempty"`
+	Passcode    string    `json:"passcode,omitempty"`
 }
 
 func (c *Client) Login(username, password string) error {
@@ -45,7 +49,7 @@ func (c *Client) Login(username, password string) error {
 	c.crypto.pwKeyHash = hash
 
 	// use salt1 to generate the encryption key
-	c.crypto.aesKey = genAesKey(c.accountID, c.crypto.pwKeyHash, c.crypto.salt1)
+	c.crypto.aesKey = genAesKey(string(c.accountID), c.crypto.pwKeyHash, c.crypto.salt1)
 	c.crypto.cipher, err = aes.NewCipher(c.crypto.aesKey)
 
 	if err != nil {

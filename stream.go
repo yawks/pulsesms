@@ -26,7 +26,7 @@ func (c *Client) Stream() {
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
 
-	url := "wss://api.pulsesms.app/api/v1/stream?account_id=" + c.accountID
+	url := fmt.Sprintf("wss://api.pulsesms.app/api/v1/stream?account_id=%s", c.accountID)
 	conn, _, err := websocket.DefaultDialer.Dial(url, nil)
 	if err != nil {
 		panic(err)
@@ -88,12 +88,12 @@ func (c *Client) handleMessage(msg []byte) {
 	err := json.Unmarshal(msg, wm)
 	if err != nil {
 		fmt.Println(string(msg))
-        return
+		return
 	}
 
-    if wm.Message.Operation == "" {
-        return
-    }
+	if wm.Message.Operation == "" {
+		return
+	}
 	fmt.Println("operation:", wm.Message.Operation)
 
 	switch wm.Message.Operation {

@@ -1,6 +1,7 @@
 package pulsesms
 
 import (
+	"fmt"
 	"path/filepath"
 	"time"
 
@@ -11,7 +12,7 @@ import (
 
 type Client struct {
 	api            *resty.Client
-	accountID      string
+	accountID      AccountID
 	baseUrl        string
 	apiVersion     string
 	crypto         accountCrypto
@@ -58,7 +59,7 @@ func (c *Client) SetMessageHandler(f func(Message)) {
 }
 
 func (c *Client) getAccountParam() string {
-	return "?account_id=" + c.accountID
+	return fmt.Sprintf("?account_id=%s", c.accountID)
 }
 
 func (c *Client) getUrl(endpoint string) string {
@@ -67,6 +68,7 @@ func (c *Client) getUrl(endpoint string) string {
 		protocol = "wss://"
 	}
 	url := filepath.Join(c.baseUrl, c.apiVersion, endpoint)
+	fmt.Println(url)
 	return protocol + url
 
 }
