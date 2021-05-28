@@ -31,7 +31,7 @@ func (c *Client) ListConversations() ([]Conversation, error) {
 
 	resp, err := c.api.R().
 		SetQueryParam("account_id", fmt.Sprint(c.accountID)).
-		SetQueryParam("limit", fmt.Sprint(75).
+		SetQueryParam("limit", fmt.Sprint(75)).
 		Get(path)
 
 	if err != nil {
