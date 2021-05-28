@@ -87,12 +87,17 @@ func (c *Client) handleMessage(msg []byte) {
 	wm := &WSMessage{}
 	err := json.Unmarshal(msg, wm)
 	if err != nil {
-		fmt.Println("skipping message invalid message")
+		fmt.Println(string(msg))
+        return
 	}
+
+    if wm.Message.Operation == "" {
+        return
+    }
+	fmt.Println("operation:", wm.Message.Operation)
 
 	switch wm.Message.Operation {
 	case "added_message":
-		fmt.Println("received new message")
 		m := wm.Message.Content
 		err := decryptMessage(c.crypto.cipher, &m)
 		if err != nil {

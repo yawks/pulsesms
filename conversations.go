@@ -9,11 +9,12 @@ type Conversation struct {
 	DeviceId     int    `json:"device_id,omitempty"`
 	FolderId     int    `json:"folder_id,omitempty"`
 	Read         bool   `json:"read,omitempty"`
-	Timestamp    int    `json:"timestamp,omitempty"`
+	Timestamp    int64  `json:"timestamp,omitempty"`
 	Title        string `json:"title,omitempty"`
 	Archive      bool   `json:"archive,omitempty"`
 	Mute         bool   `json:"mute,omitempty"`
 	PhoneNumbers string `json:"phone_numbers,omitempty"`
+	Snippet      string `json:"snippet,omitempty"`
 }
 
 func (c *Client) ListConversations() ([]Conversation, error) {
@@ -53,4 +54,28 @@ func (c *Client) ListConversations() ([]Conversation, error) {
 
 	return result, nil
 
+}
+
+func (c *Client) updateConversation(conversationID int, snippet string, timestamp int64) error {
+	req := updateConversationRequest{
+		AccountID: c.accountID,
+		Read:      false,
+		Timestamp: timestamp,
+		Snippet:   snippet,
+	}
+
+	endpoint := c.getUrl(EndpointUpdateConversation)
+	endpoint = fmt.Sprintf("%s/%s", endpoint, fmt.Sprint(conversationID))
+	resp, err := c.api.R().
+		SetHeader("Content-Type", "application/json").
+		SetBody(req).
+		Post(endpoint)
+
+	if resp.StatusCode() > 200 || err != nil {
+		fmt.Println(endpoint)
+		fmt.Println(resp.StatusCode(), resp.Status())
+		fmt.Printf(string(resp.Body()))
+		return err
+	}
+	return nil
 }

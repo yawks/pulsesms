@@ -39,6 +39,9 @@ func randomHex(length int) (string, error) {
 
 
 func encrypt(block cipher.Block, data string) (string, error) {
+	if data == "" {
+		return data, nil
+	}
 	rhex, err := randomHex(128)
 	if err != nil {
 		return "", err
@@ -67,13 +70,16 @@ func encrypt(block cipher.Block, data string) (string, error) {
 
 }
 
-func decrypt(block cipher.Block, data string) string {
+func decrypt(block cipher.Block, data string) (string, error) {
 	if data == "" {
-		return data
+		return data, nil
 	}
 
 	// https://stackoverflow.com/questions/46475204/golang-decrypt-aes-256-cbc-base64-from-nodejs
 	parts := strings.Split(data, "-:-")
+	if len(parts) != 2 {
+		return "", fmt.Errorf("invalid encrypted data format")
+	}
 
 	ciphertext, err := base64.StdEncoding.DecodeString(parts[1])
 	if err != nil {
@@ -93,12 +99,12 @@ func decrypt(block cipher.Block, data string) string {
 	mode := cipher.NewCBCDecrypter(block, iv)
 
 	mode.CryptBlocks(ciphertext, ciphertext)
-	return string(ciphertext)
+	return string(ciphertext), nil
 
 }
 
 // pkcs7Pad right-pads the given byte slice with 1 to n bytes, where
-// n is the block size. The size of the result is x times n, where x
+// n is the block size. The size of the result is x times n where x
 // is at least 1.
 // https://gist.github.com/huyinghuan/7bf174017bf54efb91ece04a48589b22
 func pkcs7Pad(b []byte, blocksize int) ([]byte, error) {
@@ -121,8 +127,9 @@ func decryptConversation(block cipher.Block, convo *Conversation) (err error) {
 	convo.Timestamp = convo.Timestamp / 1000 >> 0 // Remove ms
 	convo.Timestamp = convo.Timestamp * 1000      // Add back zero timestamp
 
-	convo.Title = decrypt(block, convo.Title)
-	convo.PhoneNumbers = decrypt(block, convo.PhoneNumbers)
+	convo.Title, err = decrypt(block, convo.Title)
+	convo.PhoneNumbers, err = decrypt(block, convo.PhoneNumbers)
+
 	return nil
 
 }
@@ -132,12 +139,16 @@ func decryptMessage(block cipher.Block, m *Message) (err error) {
 	m.Timestamp = m.Timestamp / 1000 >> 0 // Remove ms
 	m.Timestamp = m.Timestamp * 1000      // Add back zero timestamp
 
-	m.MimeType = decrypt(block, m.MimeType)
-
 	// TODO handle emojis
 
-	m.Data = decrypt(block, m.Data)
-	m.From = decrypt(block, m.From)
+	m.Data, err = decrypt(block, m.Data)
+	if err != nil {
+		return err
+	}
+	m.From, err = decrypt(block, m.From)
+	if err != nil {
+		return err
+	}
 
 	if m.DeviceID == 0 {
 		m.DeviceID = m.ID
