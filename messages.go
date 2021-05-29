@@ -13,6 +13,7 @@ type MessageID = int
 // DeviceID is the generated internal ID of the device used to interact with a PulseSMS account
 type DeviceID = int
 
+
 type Message struct {
 	ID             MessageID      `json:"id,omitempty"`
 	ConversationID ConversationID `json:"conversation_id,omitempty"`
@@ -23,7 +24,7 @@ type Message struct {
 	MimeType       string         `json:"mime_type,omitempty"`
 	Read           bool           `json:"read,omitempty"`
 	Seen           bool           `json:"seen,omitempty"`
-	From           string         `json:"from,omitempty"`
+	From           string         `json:"message_from,omitempty"`
 	Archive        bool           `json:"archive,omitempty"`
 	SentDevice     DeviceID       `json:"sent_device,omitempty"`
 	SimStamp       string         `json:"sim_stamp,omitempty"`
@@ -78,6 +79,7 @@ func (c *Client) GetMessages(conversationID int, offset int) ([]Message, error) 
 		fmt.Printf("%v: %s\n", resp.StatusCode(), resp.Status())
 		return nil, err
 	}
+    fmt.Println(string(resp.Body()))
 
 	result := []Message{}
 	for _, m := range msgs {
