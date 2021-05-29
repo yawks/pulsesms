@@ -99,7 +99,9 @@ func decrypt(block cipher.Block, data string) (string, error) {
 	mode := cipher.NewCBCDecrypter(block, iv)
 
 	mode.CryptBlocks(ciphertext, ciphertext)
-	return string(ciphertext), nil
+    content := string(ciphertext)
+    content = strings.TrimSpace(content)
+	return content, nil
 
 }
 
