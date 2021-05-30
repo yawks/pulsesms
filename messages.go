@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"strconv"
 	"time"
 )
 
@@ -12,7 +13,6 @@ type MessageID = int
 
 // DeviceID is the generated internal ID of the device used to interact with a PulseSMS account
 type DeviceID = int
-
 
 type Message struct {
 	ID             MessageID      `json:"id,omitempty"`
@@ -79,7 +79,7 @@ func (c *Client) GetMessages(conversationID int, offset int) ([]Message, error) 
 		fmt.Printf("%v: %s\n", resp.StatusCode(), resp.Status())
 		return nil, err
 	}
-    fmt.Println(string(resp.Body()))
+	// fmt.Println(string(resp.Body()))
 
 	result := []Message{}
 	for _, m := range msgs {
@@ -95,38 +95,60 @@ func (c *Client) GetMessages(conversationID int, offset int) ([]Message, error) 
 
 }
 
-func (c *Client) SendMessage(data string, conversationID int) error {
-	id := generateID()
+func (c *Client) SendMessage(m Message, convoID ConversationID) error {
+	cID, err := strconv.Atoi(convoID)
+	if err != nil {
+		return fmt.Errorf("invalid convoID: %s, %v", convoID, err)
+	}
 
-	// TODO accept mimetype
-	snippet := fmt.Sprintf("You: %s", data)
+	if m.ID == 0 {
+		m.ID = generateID()
+	}
+	if m.Snippet == "" {
+		// TODO accept mimetype
+		m.Snippet = fmt.Sprintf("You: %s", m.Data)
+	}
+
+	mime := "text/plain"
+	if m.MimeType == "" {
+		m.MimeType = mime
+	}
+
+	timestamp := time.Now().Unix()
+	if m.Timestamp == 0 {
+		m.Timestamp = timestamp
+	}
+
+	if m.Type == 0 {
+		m.Type = 2
+	}
 
 	mimetype, err := encrypt(c.crypto.cipher, "text/plain")
 	if err != nil {
 		return err
 	}
-	encData, err := encrypt(c.crypto.cipher, data)
+	encData, err := encrypt(c.crypto.cipher, m.Data)
 	if err != nil {
 		return err
 	}
-	encSnippet, err := encrypt(c.crypto.cipher, snippet)
+	encSnippet, err := encrypt(c.crypto.cipher, m.Snippet)
 	if err != nil {
 		return err
 	}
 
-	timestamp := time.Now().Unix()
 
 	req := sendMessageRequest{
 		AccountID:            c.accountID,
 		Data:                 encData,
-		DeviceConversationID: conversationID,
-		DeviceID:             id,
-		MessageType:          2,
-		Timestamp:            timestamp,
-		MimeType:             mimetype,
-		Read:                 false,
-		Seen:                 false,
-		SentDevice:           1,
+		DeviceConversationID: cID,
+		// DeviceID:             id,
+		DeviceID:    m.ID,
+		MessageType: 2,
+		Timestamp:   timestamp,
+		MimeType:    mimetype,
+		Read:        false,
+		Seen:        false,
+		SentDevice:  1,
 	}
 
 	endpoint := c.getUrl(EndpointAddMessage)
@@ -143,11 +165,18 @@ func (c *Client) SendMessage(data string, conversationID int) error {
 	fmt.Println(resp.StatusCode(), resp.Status())
 	fmt.Println(string(resp.Body()))
 
-	err = c.updateConversation(conversationID, encSnippet, timestamp)
+	err = c.updateConversation(cID, encSnippet, timestamp)
 	if err != nil {
 		return err
 	}
 
 	return nil
+
+}
+
+func (c *Client) Send(data string, conversationID ConversationID) error {
+
+	m := Message{Data: data}
+	return c.SendMessage(m, conversationID)
 
 }

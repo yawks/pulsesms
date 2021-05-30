@@ -152,9 +152,9 @@ func decryptMessage(block cipher.Block, m *Message) (err error) {
 		return err
 	}
 
-	if m.DeviceID == 0 {
-		m.DeviceID = m.ID
-	}
+	// if m.DeviceID == 0 {
+	// 	m.DeviceID = m.ID
+	// }
 
 	return nil
 

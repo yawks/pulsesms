@@ -3,15 +3,20 @@ package pulsesms
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 )
 
-// ConversationID is the internal ID of a group or one-on-one chat / thread
-type ConversationID = int
+// identifier of either conversation or conntact
+type PID = string
 
+// ConversationID is the internal ID of a group or one-on-one chat / thread
+type ConversationID = PID
+
+type PhoneNumber = PID
 
 type Conversation struct {
 	ID           ConversationID `json:"id,omitempty"`
-	DeviceId     int            `json:"device_id,omitempty"`
+	DeviceId     DeviceID       `json:"device_id,omitempty"`
 	FolderId     int            `json:"folder_id,omitempty"`
 	Read         bool           `json:"read,omitempty"`
 	Timestamp    int64          `json:"timestamp,omitempty"`
@@ -20,6 +25,53 @@ type Conversation struct {
 	Mute         bool           `json:"mute,omitempty"`
 	PhoneNumbers string         `json:"phone_numbers,omitempty"`
 	Snippet      string         `json:"snippet,omitempty"`
+}
+
+func (conv Conversation) members() []PhoneNumber {
+	return strings.Split(conv.PhoneNumbers, " ")
+}
+
+func (conv Conversation) toChat() Chat {
+	c := Chat{
+		PID: fmt.Sprint(conv.DeviceId),
+
+		ConversationID: conv.ID,
+
+		Name:            conv.Title,
+		Members:         conv.members(),
+		LastMessageTime: conv.Timestamp,
+	}
+	return c
+}
+
+func (c *Client) GetConversation(convoID ConversationID) (Conversation, error) {
+	convo := Conversation{}
+
+	endpoint := c.getUrl(EndpointConversation)
+	path := fmt.Sprintf("%s/%s", endpoint, fmt.Sprint(convoID))
+
+	resp, err := c.api.R().
+		SetQueryParam("account_id", fmt.Sprint(c.accountID)).
+		Get(path)
+
+	if err != nil {
+		fmt.Println(resp.Status())
+		return convo, err
+	}
+	fmt.Println(resp.Status())
+
+	err = json.Unmarshal(resp.Body(), &convo)
+	if err != nil {
+		return convo, fmt.Errorf("failed to unmarshall conversation: %v", err)
+	}
+
+	err = decryptConversation(c.crypto.cipher, &convo)
+	if err != nil {
+		return convo, fmt.Errorf("failed to decrypt conversation %v", err)
+	}
+
+	return convo, nil
+
 }
 
 func (c *Client) ListConversations() ([]Conversation, error) {

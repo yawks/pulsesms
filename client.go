@@ -17,6 +17,7 @@ type Client struct {
 	apiVersion     string
 	crypto         accountCrypto
 	messageHandler func(Message)
+	Store          *Store
 }
 
 type accountCrypto struct {
@@ -51,7 +52,22 @@ func New() *Client {
 	})
 	client.api = api
 
+	client.Store = newStore()
+
 	return client
+}
+
+func (c *Client) Sync() error {
+	convos, err := c.ListConversations()
+	if err != nil {
+		return err
+	}
+	for _, convo := range convos {
+		chat := convo.toChat()
+		c.Store.setChat(chat)
+	}
+	return nil
+
 }
 
 func (c *Client) SetMessageHandler(f func(Message)) {
