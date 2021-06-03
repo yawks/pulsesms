@@ -10,7 +10,7 @@ import (
 type PID = string
 
 // ConversationID is the internal ID of a group or one-on-one chat / thread
-type ConversationID = PID
+type ConversationID = int
 
 type PhoneNumber = PID
 
@@ -113,13 +113,14 @@ func (c *Client) ListConversations() ([]Conversation, error) {
 
 }
 
-func (c *Client) updateConversation(conversationID int, snippet string, timestamp int64) error {
+func (c *Client) updateConversation(conversationID ConversationID, snippet string, timestamp int64) error {
 	req := updateConversationRequest{
 		AccountID: c.accountID,
 		Read:      false,
 		Timestamp: timestamp,
 		Snippet:   snippet,
 	}
+
 
 	endpoint := c.getUrl(EndpointUpdateConversation)
 	endpoint = fmt.Sprintf("%s/%s", endpoint, fmt.Sprint(conversationID))

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
-	"strconv"
 	"time"
 )
 
@@ -32,16 +31,16 @@ type Message struct {
 }
 
 type sendMessageRequest struct {
-	AccountID            AccountID `json:"account_id,omitempty"`
-	Data                 string    `json:"data,omitempty"`
-	DeviceConversationID int       `json:"device_conversation_id,omitempty"`
-	DeviceID             DeviceID  `json:"device_id,omitempty"`
-	MessageType          int       `json:"message_type,omitempty"`
-	MimeType             string    `json:"mime_type,omitempty"`
-	Read                 bool      `json:"read,omitempty"`
-	Seen                 bool      `json:"seen,omitempty"`
-	SentDevice           DeviceID  `json:"sent_device"`
-	Timestamp            int64     `json:"timestamp,omitempty"`
+	AccountID            AccountID      `json:"account_id,omitempty"`
+	Data                 string         `json:"data,omitempty"`
+	DeviceConversationID ConversationID `json:"device_conversation_id,omitempty"`
+	DeviceID             DeviceID       `json:"device_id,omitempty"`
+	MessageType          int            `json:"message_type,omitempty"`
+	MimeType             string         `json:"mime_type,omitempty"`
+	Read                 bool           `json:"read,omitempty"`
+	Seen                 bool           `json:"seen,omitempty"`
+	SentDevice           DeviceID       `json:"sent_device"`
+	Timestamp            int64          `json:"timestamp,omitempty"`
 }
 
 type updateConversationRequest struct {
@@ -96,11 +95,6 @@ func (c *Client) GetMessages(conversationID int, offset int) ([]Message, error) 
 }
 
 func (c *Client) SendMessage(m Message, convoID ConversationID) error {
-	cID, err := strconv.Atoi(convoID)
-	if err != nil {
-		return fmt.Errorf("invalid convoID: %s, %v", convoID, err)
-	}
-
 	if m.ID == 0 {
 		m.ID = generateID()
 	}
@@ -136,19 +130,17 @@ func (c *Client) SendMessage(m Message, convoID ConversationID) error {
 		return err
 	}
 
-
 	req := sendMessageRequest{
 		AccountID:            c.accountID,
 		Data:                 encData,
-		DeviceConversationID: cID,
-		// DeviceID:             id,
-		DeviceID:    m.ID,
-		MessageType: 2,
-		Timestamp:   timestamp,
-		MimeType:    mimetype,
-		Read:        false,
-		Seen:        false,
-		SentDevice:  1,
+		DeviceConversationID: convoID,
+		DeviceID:             m.ID,
+		MessageType:          2,
+		Timestamp:            timestamp,
+		MimeType:             mimetype,
+		Read:                 false,
+		Seen:                 false,
+		SentDevice:           1,
 	}
 
 	endpoint := c.getUrl(EndpointAddMessage)
@@ -165,7 +157,7 @@ func (c *Client) SendMessage(m Message, convoID ConversationID) error {
 	fmt.Println(resp.StatusCode(), resp.Status())
 	fmt.Println(string(resp.Body()))
 
-	err = c.updateConversation(cID, encSnippet, timestamp)
+	err = c.updateConversation(convoID, encSnippet, timestamp)
 	if err != nil {
 		return err
 	}

@@ -4,7 +4,7 @@ import "time"
 
 type Store struct {
 	Contacts map[PID]Contact
-	Chats    map[PID]Chat
+	Chats    map[ConversationID]Chat
 }
 
 type Contact struct {
@@ -33,7 +33,7 @@ type Chat struct {
 func newStore() *Store {
 	return &Store{
 		Contacts: make(map[PID]Contact),
-		Chats:    make(map[PID]Chat),
+		Chats:    make(map[ConversationID]Chat),
 	}
 }
 
@@ -56,7 +56,7 @@ func (s *Store) GetContactByName(name string) (Contact, bool) {
 }
 
 func (s *Store) setChat(chat Chat) {
-	s.Chats[chat.PID] = chat
+	s.Chats[chat.ConversationID] = chat
 
 	// dm
 	if len(chat.Members) == 1 {
@@ -77,5 +77,5 @@ func (s *Store) setChat(chat Chat) {
 }
 
 func (s *Store) SetConversation(chat Chat) {
-	s.Chats[chat.PID] = chat
+	s.Chats[chat.ConversationID] = chat
 }
