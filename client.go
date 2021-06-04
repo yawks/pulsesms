@@ -21,13 +21,10 @@ type Client struct {
 }
 
 type accountCrypto struct {
-	// the primary salt used to created thr AES keu
+	// the primary salt used to created the AES key
 	salt1 []byte
 
-	// the secondary salt used to generate the password hash
-	salt2 []byte
-
-	// has of the key derived from password and salt2
+	// hash of the key derived from password and salt2
 	pwKeyHash string
 
 	// the AES encryption key
@@ -57,11 +54,16 @@ func New() *Client {
 	return client
 }
 
+func (c *Client) AccountID() AccountID {
+	return c.accountID
+}
+
 func (c *Client) Sync() error {
 	convos, err := c.ListConversations()
 	if err != nil {
 		return err
 	}
+
 	for _, convo := range convos {
 		chat := convo.toChat()
 		c.Store.setChat(chat)

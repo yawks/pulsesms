@@ -18,16 +18,58 @@ type loginResponse struct {
 	Passcode    string    `json:"passcode,omitempty"`
 }
 
-func (c *Client) Login(username, password string) error {
-	body := map[string]string{
-		"username": username,
-		"password": password,
+// LoginCredentials is used for basic username/password login
+// These are required to obtain KeyCredentials required for encryption
+type BasicCredentials struct {
+	Username string `json:"username,omitempty"`
+	Password string `json:"password,omitempty"`
+}
+
+// KeyCredentials are the inputs used to generate an encryption key
+// Note these can only be generated after calling Login
+type KeyCredentials struct {
+	// the account id required to access API resources
+	AccountID AccountID
+
+	// hash of account password and pepper (salt2)
+	PasswordHash string
+
+	// salt used
+	Salt string
+}
+
+// GenerateKey generates and configures the client's encryption key
+func (c *Client) GenerateKey(creds KeyCredentials) error {
+	c.accountID = AccountID(creds.AccountID)
+	c.crypto.salt1 = []byte(creds.Salt)
+	c.crypto.pwKeyHash = creds.PasswordHash
+
+	var err error
+
+	c.crypto.aesKey = genAesKey(string(c.accountID), c.crypto.pwKeyHash, c.crypto.salt1)
+	c.crypto.cipher, err = aes.NewCipher(c.crypto.aesKey)
+	if err != nil {
+		return err
 	}
+	return nil
+}
+
+func (c *Client) GetKeyCredentials() KeyCredentials {
+	return KeyCredentials{
+		AccountID:    c.accountID,
+		PasswordHash: c.crypto.pwKeyHash,
+		Salt:         string(c.crypto.salt1),
+	}
+
+}
+
+// Login authenticates with pulse and setups up client encryption
+func (c *Client) Login(creds BasicCredentials) error {
 	result := loginResponse{}
 
 	endpoint := c.getUrl(EndpointLogin)
 
-	resp, err := c.api.R().SetBody(body).SetResult(&result).EnableTrace().Post(endpoint)
+	resp, err := c.api.R().SetBody(creds).SetResult(&result).EnableTrace().Post(endpoint)
 	if err != nil {
 		return err
 	}
@@ -40,22 +82,20 @@ func (c *Client) Login(username, password string) error {
 		return fmt.Errorf("response missing accounntID")
 	}
 
-	c.accountID = result.AccountID
-	c.crypto.salt1 = []byte(result.Salt1)
-	c.crypto.salt2 = []byte(result.Salt2)
-
-	// use salt2 to generate the hash
-	hash := hashPasswordSalt(password, c.crypto.salt2)
-	c.crypto.pwKeyHash = hash
+	// use salt2 (pepper) to generate the hash
+	hash := hashPasswordSalt(creds.Password, []byte(result.Salt2))
 
 	// use salt1 to generate the encryption key
-	c.crypto.aesKey = genAesKey(string(c.accountID), c.crypto.pwKeyHash, c.crypto.salt1)
-	c.crypto.cipher, err = aes.NewCipher(c.crypto.aesKey)
+	keyCreds := KeyCredentials{
+		AccountID:    result.AccountID,
+		PasswordHash: hash,
+		Salt:         result.Salt1,
+	}
 
+	err = c.GenerateKey(keyCreds)
 	if err != nil {
 		return err
 	}
 
 	return nil
-
 }

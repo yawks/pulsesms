@@ -58,7 +58,6 @@ func (c *Client) GetConversation(convoID ConversationID) (Conversation, error) {
 		fmt.Println(resp.Status())
 		return convo, err
 	}
-	fmt.Println(resp.Status())
 
 	err = json.Unmarshal(resp.Body(), &convo)
 	if err != nil {
@@ -87,7 +86,7 @@ func (c *Client) ListConversations() ([]Conversation, error) {
 		Get(path)
 
 	if err != nil {
-		fmt.Printf("%v: %s", resp.StatusCode(), resp.Status())
+		fmt.Println(resp.Status())
 		return nil, err
 
 	}
@@ -130,11 +129,8 @@ func (c *Client) updateConversation(conversationID ConversationID, snippet strin
 		Post(endpoint)
 
 	if resp.StatusCode() > 200 || err != nil {
-		fmt.Println(endpoint)
-		fmt.Println(resp.StatusCode(), resp.Status())
-		fmt.Printf(string(resp.Body()))
+		fmt.Println(resp.Status())
 		return err
 	}
-	fmt.Println("updated conversation", conversationID)
 	return nil
 }

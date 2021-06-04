@@ -94,8 +94,8 @@ func (c *Client) handleMessage(msg []byte) {
 	if wm.Message.Operation == "" {
 		return
 	}
-	fmt.Println("operation:", wm.Message.Operation)
 
+	fmt.Println("operation:", wm.Message.Operation)
 	switch wm.Message.Operation {
 	case "added_message":
 		m := wm.Message.Content
