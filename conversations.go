@@ -31,20 +31,8 @@ func (conv Conversation) members() []PhoneNumber {
 	return strings.Split(conv.PhoneNumbers, " ")
 }
 
-func (conv Conversation) toChat() Chat {
-	c := Chat{
-		PID: fmt.Sprint(conv.DeviceId),
 
-		ConversationID: conv.ID,
-
-		Name:            conv.Title,
-		Members:         conv.members(),
-		LastMessageTime: conv.Timestamp,
-	}
-	return c
-}
-
-func (c *Client) GetConversation(convoID ConversationID) (Conversation, error) {
+func (c *Client) getConversation(convoID ConversationID) (Conversation, error) {
 	convo := Conversation{}
 
 	endpoint := c.getUrl(EndpointConversation)
@@ -73,7 +61,7 @@ func (c *Client) GetConversation(convoID ConversationID) (Conversation, error) {
 
 }
 
-func (c *Client) ListConversations() ([]Conversation, error) {
+func (c *Client) listConversations() ([]Conversation, error) {
 	index := "index_public_unarchived"
 
 	endpoint := c.getUrl(EndpointConversations)

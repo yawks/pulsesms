@@ -36,27 +36,23 @@ func main() {
 		return
 	}
 
-	fmt.Println("Contacts")
+	fmt.Println("\nContacts")
 	for _, contact := range c.Store.Contacts {
-		fmt.Println(contact.Name, contact.PID)
-	}
-
-	fmt.Println("Chats")
-	for _, chat := range c.Store.Chats {
-		fmt.Println(chat.Name, chat.Members)
+		fmt.Println(contact.Name)
+		fmt.Println(contact.PID)
+		fmt.Println("")
 	}
 
 	c.SetMessageHandler(func(m pulsesms.Message) {
-		fmt.Printf("processing msg %v: %s", m.ID, m.Data)
-		fmt.Println("getting convo msgs:", m.ConversationID)
 
 		fmt.Println(m.ConversationID)
-		fmt.Println(m.DeviceID)
-		fmt.Println(m.Data)
-
-		fmt.Println("from convo id")
-		convo := c.Store.Chats[m.ConversationID]
-		fmt.Println(convo)
+		fmt.Println("getting conversation")
+		chat, ok := c.GetChat(m.ConversationID)
+		if !ok {
+			fmt.Println("couldnt find convo")
+		}
+		fmt.Println("message from chat:", chat.PID, chat.ConversationID)
+		fmt.Println("members", chat.Members)
 
 	})
 

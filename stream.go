@@ -21,6 +21,10 @@ type WSMessage struct {
 	Message    NotificationMessage `json:"message,omitempty"`
 }
 
+type Conn struct {
+	conn *websocket.Conn
+}
+
 func (c *Client) Stream() {
 
 	interrupt := make(chan os.Signal, 1)
@@ -95,7 +99,7 @@ func (c *Client) handleMessage(msg []byte) {
 		return
 	}
 
-	fmt.Println("operation:", wm.Message.Operation)
+	// fmt.Println("operation:", wm.Message.Operation)
 	switch wm.Message.Operation {
 	case "added_message":
 		m := wm.Message.Content
@@ -104,6 +108,13 @@ func (c *Client) handleMessage(msg []byte) {
 			fmt.Println("failed to decrypt message:", err)
 			return
 		}
+		// update store
+		convo, err := c.getConversation(m.ConversationID)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		c.Store.SetConversation(convo)
 		go c.messageHandler(m)
 
 	case "removed_message":

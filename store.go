@@ -1,10 +1,15 @@
 package pulsesms
 
-import "time"
+import (
+	"fmt"
+	"sync"
+	"time"
+)
 
 type Store struct {
+	sync.Mutex
 	Contacts map[PID]Contact
-	Chats    map[ConversationID]Chat
+	Chats    map[PID]Chat
 }
 
 type Contact struct {
@@ -30,23 +35,40 @@ type Chat struct {
 	ReceivedAt time.Time
 }
 
+func newChat(conv Conversation) Chat {
+	c := Chat{
+		// PID: fmt.Sprint(conv.DeviceId),
+		PID: fmt.Sprint(conv.ID),
+
+		ConversationID: conv.ID,
+
+		Name:            conv.Title,
+		Members:         conv.members(),
+		LastMessageTime: conv.Timestamp,
+	}
+	return c
+}
+
 func newStore() *Store {
 	return &Store{
 		Contacts: make(map[PID]Contact),
-		Chats:    make(map[ConversationID]Chat),
+		Chats:    make(map[PID]Chat),
 	}
 }
 
 func (s *Store) setContact(phone PhoneNumber, contact Contact) {
+	// fmt.Println("setting contact", phone, contact.PID, contact.Name)
+	s.Lock()
 	s.Contacts[phone] = contact
+	s.Unlock()
 }
 
-func (s *Store) GetContactByPhone(phone PhoneNumber) (Contact, bool) {
+func (s *Store) getContactByPhone(phone PhoneNumber) (Contact, bool) {
 	c, ok := s.Contacts[phone]
 	return c, ok
 }
 
-func (s *Store) GetContactByName(name string) (Contact, bool) {
+func (s *Store) getContactByName(name string) (Contact, bool) {
 	for _, c := range s.Contacts {
 		if c.Name == name {
 			return c, true
@@ -55,8 +77,37 @@ func (s *Store) GetContactByName(name string) (Contact, bool) {
 	return Contact{}, false
 }
 
+func (s *Store) getChatByConversationID(convoID ConversationID) (Chat, bool) {
+	fmt.Println("gettin chat by convo", convoID)
+	for _, c := range s.Chats {
+		if c.ConversationID == convoID {
+			fmt.Println("match name:", c.Name)
+			fmt.Println("match pid:", c.PID)
+			return c, true
+		}
+	}
+	return Chat{}, false
+}
+
+func (s *Store) SetConversation(convo Conversation) {
+	chat := newChat(convo)
+	s.setChat(chat)
+}
+
+// func (s *Store) GetChatFromMessage(m Message) (Chat, bool) {
+// 	return s.GetChatByConversationID(m.ConversationID)
+
+// }
+
 func (s *Store) setChat(chat Chat) {
-	s.Chats[chat.ConversationID] = chat
+	s.Lock()
+
+	// fmt.Println("setting chat")
+	// fmt.Printf("name: %s, pid: %s, convoID: %d\n", chat.Name, chat.PID, chat.ConversationID)
+	if chat.PID != "" {
+		s.Chats[chat.PID] = chat
+	}
+	s.Unlock()
 
 	// dm
 	if len(chat.Members) == 1 {
@@ -74,8 +125,4 @@ func (s *Store) setChat(chat Chat) {
 		}
 
 	}
-}
-
-func (s *Store) SetConversation(chat Chat) {
-	s.Chats[chat.ConversationID] = chat
 }

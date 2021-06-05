@@ -59,17 +59,37 @@ func (c *Client) AccountID() AccountID {
 }
 
 func (c *Client) Sync() error {
-	convos, err := c.ListConversations()
+	convos, err := c.listConversations()
 	if err != nil {
 		return err
 	}
-
 	for _, convo := range convos {
-		chat := convo.toChat()
+		chat := newChat(convo)
 		c.Store.setChat(chat)
 	}
 	return nil
+}
 
+func (c *Client) GetChat(convoID ConversationID) (Chat, bool) {
+	chat, ok := c.Store.getChatByConversationID(convoID)
+	if ok {
+		return chat, true
+	}
+	conv, err := c.getConversation(convoID)
+	if err != nil {
+		return Chat{}, false
+	}
+	chat = newChat(conv)
+	c.Store.setChat(chat)
+	return chat, true
+}
+
+func (c *Client) GetContactByName(name string) (Contact, bool) {
+	return c.Store.getContactByName(name)
+}
+
+func (c *Client) GetContactByPhone(phone PID) (Contact, bool) {
+	return c.Store.getContactByPhone(phone)
 }
 
 func (c *Client) SetMessageHandler(f func(Message)) {
