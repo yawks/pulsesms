@@ -1,7 +1,6 @@
 package pulsesms
 
 import (
-	"fmt"
 	"sync"
 	"time"
 )
@@ -9,7 +8,7 @@ import (
 type Store struct {
 	sync.Mutex
 	Contacts map[PID]Contact
-	Chats    map[PID]Chat
+	Chats    map[ConversationID]Chat
 }
 
 type Contact struct {
@@ -20,7 +19,7 @@ type Contact struct {
 }
 
 type Chat struct {
-	PID             PID
+	// PID             PID
 	ConversationID  ConversationID
 	Name            string
 	ModifyTag       string
@@ -37,10 +36,7 @@ type Chat struct {
 
 func newChat(conv Conversation) Chat {
 	c := Chat{
-		// PID: fmt.Sprint(conv.DeviceId),
-		PID: fmt.Sprint(conv.ID),
-
-		ConversationID: conv.ID,
+		ConversationID: conv.DeviceId,
 
 		Name:            conv.Title,
 		Members:         conv.members(),
@@ -52,7 +48,7 @@ func newChat(conv Conversation) Chat {
 func newStore() *Store {
 	return &Store{
 		Contacts: make(map[PID]Contact),
-		Chats:    make(map[PID]Chat),
+		Chats:    make(map[ConversationID]Chat),
 	}
 }
 
@@ -77,35 +73,15 @@ func (s *Store) getContactByName(name string) (Contact, bool) {
 	return Contact{}, false
 }
 
-func (s *Store) getChatByConversationID(convoID ConversationID) (Chat, bool) {
-	fmt.Println("gettin chat by convo", convoID)
-	for _, c := range s.Chats {
-		if c.ConversationID == convoID {
-			fmt.Println("match name:", c.Name)
-			fmt.Println("match pid:", c.PID)
-			return c, true
-		}
-	}
-	return Chat{}, false
-}
-
 func (s *Store) SetConversation(convo Conversation) {
 	chat := newChat(convo)
 	s.setChat(chat)
 }
 
-// func (s *Store) GetChatFromMessage(m Message) (Chat, bool) {
-// 	return s.GetChatByConversationID(m.ConversationID)
-
-// }
-
 func (s *Store) setChat(chat Chat) {
 	s.Lock()
-
-	// fmt.Println("setting chat")
-	// fmt.Printf("name: %s, pid: %s, convoID: %d\n", chat.Name, chat.PID, chat.ConversationID)
-	if chat.PID != "" {
-		s.Chats[chat.PID] = chat
+	if chat.ConversationID != 0 {
+		s.Chats[chat.ConversationID] = chat
 	}
 	s.Unlock()
 

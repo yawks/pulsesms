@@ -75,7 +75,7 @@ func (c *Client) Sync() error {
 }
 
 func (c *Client) GetChat(convoID ConversationID) (Chat, bool) {
-	chat, ok := c.Store.getChatByConversationID(convoID)
+	chat, ok := c.Store.Chats[convoID]
 	if ok {
 		return chat, true
 	}

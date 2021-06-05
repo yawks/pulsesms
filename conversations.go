@@ -116,8 +116,8 @@ func (c *Client) updateConversation(conversationID ConversationID, snippet strin
 		SetBody(req).
 		Post(endpoint)
 
+	fmt.Println(resp.Status())
 	if resp.StatusCode() > 200 || err != nil {
-		fmt.Println(resp.Status())
 		return err
 	}
 	return nil

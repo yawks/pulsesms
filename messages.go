@@ -95,9 +95,8 @@ func (c *Client) GetMessages(conversationID int, offset int) ([]Message, error) 
 }
 
 func (c *Client) SendMessage(m Message, convoID ConversationID) error {
-	if m.ID == 0 {
-		m.ID = generateID()
-	}
+
+	deviceID := generateID()
 	if m.Snippet == "" {
 		// TODO accept mimetype
 		m.Snippet = fmt.Sprintf("You: %s", m.Data)
@@ -134,7 +133,7 @@ func (c *Client) SendMessage(m Message, convoID ConversationID) error {
 		AccountID:            c.accountID,
 		Data:                 encData,
 		DeviceConversationID: convoID,
-		DeviceID:             m.ID,
+		DeviceID:             deviceID,
 		MessageType:          2,
 		Timestamp:            timestamp,
 		MimeType:             mimetype,
@@ -149,13 +148,11 @@ func (c *Client) SendMessage(m Message, convoID ConversationID) error {
 		SetBody(req).
 		Post(endpoint)
 
+	fmt.Println(resp.Status())
 	if resp.StatusCode() > 200 || err != nil {
-		fmt.Printf("%v: %s\n", resp.StatusCode(), resp.Status())
-		return err
+		return fmt.Errorf(resp.Status())
 	}
 	fmt.Println("sent message")
-	fmt.Println(resp.StatusCode(), resp.Status())
-	fmt.Println(string(resp.Body()))
 
 	err = c.updateConversation(convoID, encSnippet, timestamp)
 	if err != nil {

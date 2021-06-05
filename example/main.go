@@ -43,6 +43,13 @@ func main() {
 		fmt.Println("")
 	}
 
+	fmt.Println("\nChats")
+	for _, chat := range c.Store.Chats {
+		fmt.Println(chat.Name)
+		fmt.Println(chat.ConversationID)
+		fmt.Println("")
+	}
+
 	c.SetMessageHandler(func(m pulsesms.Message) {
 
 		fmt.Println(m.ConversationID)
@@ -51,7 +58,7 @@ func main() {
 		if !ok {
 			fmt.Println("couldnt find convo")
 		}
-		fmt.Println("message from chat:", chat.PID, chat.ConversationID)
+		fmt.Println("message from chat:", chat.ConversationID)
 		fmt.Println("members", chat.Members)
 
 	})

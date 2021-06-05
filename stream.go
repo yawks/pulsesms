@@ -36,10 +36,9 @@ func (c *Client) Stream() {
 		panic(err)
 	}
 
-    c.connected = true
+	c.connected = true
 	defer conn.Close()
-    defer func(){c.connected = false}()
-
+	defer func() { c.connected = false }()
 
 	subscribe := map[string]interface{}{
 		"command":    "subscribe",
