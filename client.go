@@ -18,6 +18,7 @@ type Client struct {
 	crypto         accountCrypto
 	messageHandler func(Message)
 	Store          *Store
+	connected      bool
 }
 
 type accountCrypto struct {
@@ -56,6 +57,9 @@ func New() *Client {
 
 func (c *Client) AccountID() AccountID {
 	return c.accountID
+}
+func (c *Client) IsConnected() bool {
+	return c.connected
 }
 
 func (c *Client) Sync() error {

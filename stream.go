@@ -35,7 +35,11 @@ func (c *Client) Stream() {
 	if err != nil {
 		panic(err)
 	}
+
+    c.connected = true
 	defer conn.Close()
+    defer func(){c.connected = false}()
+
 
 	subscribe := map[string]interface{}{
 		"command":    "subscribe",
@@ -68,7 +72,6 @@ func (c *Client) Stream() {
 	for {
 		select {
 		case <-done:
-			fmt.Println("done")
 			return
 		case <-interrupt:
 			// Cleanly close the connection by sending a close message and then
