@@ -97,7 +97,7 @@ func (c *Client) GetContactByName(name string) (Contact, bool) {
 	return c.Store.getContactByName(name)
 }
 
-func (c *Client) GetContactByPhone(phone PID) (Contact, bool) {
+func (c *Client) GetContactByPhone(phone PhoneNumber) (Contact, bool) {
 	return c.Store.getContactByPhone(phone)
 }
 

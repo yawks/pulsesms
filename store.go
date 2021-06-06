@@ -22,7 +22,6 @@ type Contact struct {
 }
 
 type Chat struct {
-	// PID             PID
 	ID              ChatID
 	Name            string
 	ModifyTag       string
@@ -50,7 +49,7 @@ func newChat(conv conversation) Chat {
 
 func newStore() *Store {
 	return &Store{
-		Contacts: make(map[PID]Contact),
+		Contacts: make(map[PhoneNumber]Contact),
 		Chats:    make(map[ChatID]Chat),
 	}
 }

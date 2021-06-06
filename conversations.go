@@ -6,14 +6,10 @@ import (
 	"strings"
 )
 
-// identifier of either conversation or conntact
-type PID = string
-
 // ConversationID is the internal ID of a group or one-on-one chat / thread
 type conversationID = int
 
-type PhoneNumber = PID
-
+type PhoneNumber = string
 
 type conversation struct {
 	ID           conversationID `json:"id,omitempty"`
