@@ -39,7 +39,7 @@ func main() {
 	fmt.Println("\nContacts")
 	for _, contact := range c.Store.Contacts {
 		fmt.Println(contact.Name)
-		fmt.Println(contact.PID)
+		fmt.Println(contact.PhoneNumber)
 		fmt.Println("")
 	}
 

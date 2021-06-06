@@ -10,15 +10,15 @@ type ChatID = string
 
 type Store struct {
 	sync.Mutex
-	Contacts map[PID]Contact
+	Contacts map[PhoneNumber]Contact
 	Chats    map[ChatID]Chat
 }
 
 type Contact struct {
-	PID    PID
-	Notify string
-	Name   string
-	Short  string
+	PhoneNumber PhoneNumber
+	Notify      string
+	Name        string
+	Short       string
 }
 
 type Chat struct {
@@ -91,7 +91,7 @@ func (s *Store) setChat(chat Chat) {
 	// dm
 	if len(chat.Members) == 1 {
 		m := chat.Members[0]
-		contact := Contact{PID: m, Name: chat.Name}
+		contact := Contact{PhoneNumber: m, Name: chat.Name}
 		s.setContact(m, contact)
 		return
 	}
@@ -99,7 +99,7 @@ func (s *Store) setChat(chat Chat) {
 	for _, m := range chat.Members {
 		_, ok := s.Contacts[m]
 		if !ok {
-			noname := Contact{PID: m, Name: m}
+			noname := Contact{PhoneNumber: m, Name: m}
 			s.setContact(m, noname)
 		}
 
