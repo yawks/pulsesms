@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"strconv"
 	"time"
 )
 
@@ -15,7 +16,7 @@ type DeviceID = int
 
 type Message struct {
 	ID             MessageID      `json:"id,omitempty"`
-	ConversationID ConversationID `json:"conversation_id,omitempty"`
+	ConversationID conversationID `json:"conversation_id,omitempty"`
 	DeviceID       DeviceID       `json:"device_id,omitempty"`
 	Type           int            `json:"type,omitempty"`
 	Data           string         `json:"data,omitempty"`
@@ -30,10 +31,14 @@ type Message struct {
 	Snippet        string         `json:"snippet,omitempty"`
 }
 
+func (m Message) ChatID() ChatID {
+	return fmt.Sprint(m.ConversationID)
+}
+
 type sendMessageRequest struct {
 	AccountID            AccountID      `json:"account_id,omitempty"`
 	Data                 string         `json:"data,omitempty"`
-	DeviceConversationID ConversationID `json:"device_conversation_id,omitempty"`
+	DeviceConversationID conversationID `json:"device_conversation_id,omitempty"`
 	DeviceID             DeviceID       `json:"device_id,omitempty"`
 	MessageType          int            `json:"message_type,omitempty"`
 	MimeType             string         `json:"mime_type,omitempty"`
@@ -94,7 +99,11 @@ func (c *Client) GetMessages(conversationID int, offset int) ([]Message, error) 
 
 }
 
-func (c *Client) SendMessage(m Message, convoID ConversationID) error {
+func (c *Client) SendMessage(m Message, chatID string) error {
+	convoID, err := strconv.Atoi(chatID)
+	if err != nil {
+		return fmt.Errorf("invalid chatID")
+	}
 
 	deviceID := generateID()
 	if m.Snippet == "" {
@@ -163,9 +172,8 @@ func (c *Client) SendMessage(m Message, convoID ConversationID) error {
 
 }
 
-func (c *Client) Send(data string, conversationID ConversationID) error {
-
+func (c *Client) Send(data string, chatID ChatID) error {
 	m := Message{Data: data}
-	return c.SendMessage(m, conversationID)
+	return c.SendMessage(m, chatID)
 
 }

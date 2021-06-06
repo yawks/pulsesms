@@ -24,7 +24,6 @@ func genAesKey(accountId string, pwHash string, salt []byte) []byte {
 	combinedKey := fmt.Sprintf("%s:%s\n", accountId, pwHash)
 	key := pbkdf2.Key([]byte(combinedKey), salt, 10000, 32, sha1.New)
 	return key
-
 }
 
 func randomHex(length int) (string, error) {
@@ -36,7 +35,6 @@ func randomHex(length int) (string, error) {
 	return hex.EncodeToString(b), nil
 
 }
-
 
 func encrypt(block cipher.Block, data string) (string, error) {
 	if data == "" {
@@ -99,8 +97,8 @@ func decrypt(block cipher.Block, data string) (string, error) {
 	mode := cipher.NewCBCDecrypter(block, iv)
 
 	mode.CryptBlocks(ciphertext, ciphertext)
-    content := string(ciphertext)
-    content = strings.TrimSpace(content)
+	content := string(ciphertext)
+	content = strings.TrimSpace(content)
 	return content, nil
 
 }
@@ -123,7 +121,7 @@ func pkcs7Pad(b []byte, blocksize int) ([]byte, error) {
 	copy(pb[len(b):], bytes.Repeat([]byte{byte(n)}, n))
 	return pb, nil
 }
-func decryptConversation(block cipher.Block, convo *Conversation) (err error) {
+func decryptConversation(block cipher.Block, convo *conversation) (err error) {
 
 	// Removes miliiseconds from timestamp
 	convo.Timestamp = convo.Timestamp / 1000 >> 0 // Remove ms

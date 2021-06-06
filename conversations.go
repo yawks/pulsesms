@@ -10,12 +10,13 @@ import (
 type PID = string
 
 // ConversationID is the internal ID of a group or one-on-one chat / thread
-type ConversationID = int
+type conversationID = int
 
 type PhoneNumber = PID
 
-type Conversation struct {
-	ID           ConversationID `json:"id,omitempty"`
+
+type conversation struct {
+	ID           conversationID `json:"id,omitempty"`
 	DeviceId     DeviceID       `json:"device_id,omitempty"`
 	FolderId     int            `json:"folder_id,omitempty"`
 	Read         bool           `json:"read,omitempty"`
@@ -27,13 +28,12 @@ type Conversation struct {
 	Snippet      string         `json:"snippet,omitempty"`
 }
 
-func (conv Conversation) members() []PhoneNumber {
+func (conv conversation) members() []PhoneNumber {
 	return strings.Split(conv.PhoneNumbers, " ")
 }
 
-
-func (c *Client) getConversation(convoID ConversationID) (Conversation, error) {
-	convo := Conversation{}
+func (c *Client) getConversation(convoID conversationID) (conversation, error) {
+	convo := conversation{}
 
 	endpoint := c.getUrl(EndpointConversation)
 	path := fmt.Sprintf("%s/%s", endpoint, fmt.Sprint(convoID))
@@ -61,7 +61,7 @@ func (c *Client) getConversation(convoID ConversationID) (Conversation, error) {
 
 }
 
-func (c *Client) listConversations() ([]Conversation, error) {
+func (c *Client) listConversations() ([]conversation, error) {
 	index := "index_public_unarchived"
 
 	endpoint := c.getUrl(EndpointConversations)
@@ -79,14 +79,14 @@ func (c *Client) listConversations() ([]Conversation, error) {
 
 	}
 
-	convos := []Conversation{}
+	convos := []conversation{}
 
 	err = json.Unmarshal(resp.Body(), &convos)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshall conversations: %v", err)
 	}
 
-	result := []Conversation{}
+	result := []conversation{}
 	for _, conv := range convos {
 		err := decryptConversation(c.crypto.cipher, &conv)
 		if err != nil {
@@ -100,14 +100,13 @@ func (c *Client) listConversations() ([]Conversation, error) {
 
 }
 
-func (c *Client) updateConversation(conversationID ConversationID, snippet string, timestamp int64) error {
+func (c *Client) updateConversation(conversationID conversationID, snippet string, timestamp int64) error {
 	req := updateConversationRequest{
 		AccountID: c.accountID,
 		Read:      false,
 		Timestamp: timestamp,
 		Snippet:   snippet,
 	}
-
 
 	endpoint := c.getUrl(EndpointUpdateConversation)
 	endpoint = fmt.Sprintf("%s/%s", endpoint, fmt.Sprint(conversationID))

@@ -1,14 +1,17 @@
 package pulsesms
 
 import (
+	"fmt"
 	"sync"
 	"time"
 )
 
+type ChatID = string
+
 type Store struct {
 	sync.Mutex
 	Contacts map[PID]Contact
-	Chats    map[ConversationID]Chat
+	Chats    map[ChatID]Chat
 }
 
 type Contact struct {
@@ -20,7 +23,7 @@ type Contact struct {
 
 type Chat struct {
 	// PID             PID
-	ConversationID  ConversationID
+	ID              ChatID
 	Name            string
 	ModifyTag       string
 	UnreadCount     int
@@ -34,10 +37,10 @@ type Chat struct {
 	ReceivedAt time.Time
 }
 
-func newChat(conv Conversation) Chat {
+func newChat(conv conversation) Chat {
+	id := fmt.Sprint(conv.DeviceId)
 	c := Chat{
-		ConversationID: conv.DeviceId,
-
+		ID:              id,
 		Name:            conv.Title,
 		Members:         conv.members(),
 		LastMessageTime: conv.Timestamp,
@@ -48,7 +51,7 @@ func newChat(conv Conversation) Chat {
 func newStore() *Store {
 	return &Store{
 		Contacts: make(map[PID]Contact),
-		Chats:    make(map[ConversationID]Chat),
+		Chats:    make(map[ChatID]Chat),
 	}
 }
 
@@ -73,15 +76,15 @@ func (s *Store) getContactByName(name string) (Contact, bool) {
 	return Contact{}, false
 }
 
-func (s *Store) SetConversation(convo Conversation) {
+func (s *Store) setConversation(convo conversation) {
 	chat := newChat(convo)
 	s.setChat(chat)
 }
 
 func (s *Store) setChat(chat Chat) {
 	s.Lock()
-	if chat.ConversationID != 0 {
-		s.Chats[chat.ConversationID] = chat
+	if chat.ID != "" && chat.ID != "0" {
+		s.Chats[chat.ID] = chat
 	}
 	s.Unlock()
 

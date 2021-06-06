@@ -3,6 +3,7 @@ package pulsesms
 import (
 	"fmt"
 	"path/filepath"
+	"strconv"
 	"time"
 
 	"crypto/cipher"
@@ -74,10 +75,14 @@ func (c *Client) Sync() error {
 	return nil
 }
 
-func (c *Client) GetChat(convoID ConversationID) (Chat, bool) {
-	chat, ok := c.Store.Chats[convoID]
+func (c *Client) GetChat(chatID ChatID) (Chat, bool) {
+	chat, ok := c.Store.Chats[chatID]
 	if ok {
 		return chat, true
+	}
+	convoID, err := strconv.Atoi(chatID)
+	if err != nil {
+		return chat, false
 	}
 	conv, err := c.getConversation(convoID)
 	if err != nil {

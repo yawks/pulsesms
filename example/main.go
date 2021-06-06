@@ -46,7 +46,7 @@ func main() {
 	fmt.Println("\nChats")
 	for _, chat := range c.Store.Chats {
 		fmt.Println(chat.Name)
-		fmt.Println(chat.ConversationID)
+		fmt.Println(chat.ID)
 		fmt.Println("")
 	}
 
@@ -54,11 +54,11 @@ func main() {
 
 		fmt.Println(m.ConversationID)
 		fmt.Println("getting conversation")
-		chat, ok := c.GetChat(m.ConversationID)
+		chat, ok := c.GetChat(m.ChatID())
 		if !ok {
 			fmt.Println("couldnt find convo")
 		}
-		fmt.Println("message from chat:", chat.ConversationID)
+		fmt.Println("message from chat:", chat.ID)
 		fmt.Println("members", chat.Members)
 
 	})

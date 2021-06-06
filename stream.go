@@ -116,7 +116,7 @@ func (c *Client) handleMessage(msg []byte) {
 			fmt.Println(err)
 			return
 		}
-		c.Store.SetConversation(convo)
+		c.Store.setConversation(convo)
 		go c.messageHandler(m)
 
 	case "removed_message":
