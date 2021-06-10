@@ -21,10 +21,6 @@ type WSMessage struct {
 	Message    NotificationMessage `json:"message,omitempty"`
 }
 
-type Conn struct {
-	conn *websocket.Conn
-}
-
 func (c *Client) Stream() {
 
 	interrupt := make(chan os.Signal, 1)

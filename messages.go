@@ -32,6 +32,9 @@ type Message struct {
 }
 
 func (m Message) ChatID() ChatID {
+	if m.ConversationID == 0 {
+		return fmt.Sprint(m.DeviceID)
+	}
 	return fmt.Sprint(m.ConversationID)
 }
 
