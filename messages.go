@@ -18,7 +18,7 @@ type Message struct {
 	ID             MessageID      `json:"id,omitempty"`
 	ConversationID conversationID `json:"conversation_id,omitempty"`
 	DeviceID       DeviceID       `json:"device_id,omitempty"`
-	Type           int            `json:"type,omitempty"`
+	Type           int            `json:"message_type,omitempty"`
 	Data           string         `json:"data,omitempty"`
 	Timestamp      int64          `json:"timestamp,omitempty"`
 	MimeType       string         `json:"mime_type,omitempty"`
@@ -41,6 +41,14 @@ func (m Message) ChatID() ChatID {
 func (m Message) UnixTime() time.Time {
 	newTime := m.Timestamp / 1000 >> 0 // remove ms
 	return time.Unix(newTime, 0)
+}
+
+func (m Message) Received() bool {
+	return m.Type == 0 || m.Type == 6
+}
+
+func (m Message) Sent() bool {
+	return !m.Received()
 }
 
 type sendMessageRequest struct {
@@ -84,6 +92,7 @@ func (c *Client) GetMessages(conversationID int, offset int) ([]Message, error) 
 		SetQueryParam("conversation_id", fmt.Sprint(conversationID)).
 		SetQueryParam("offset", fmt.Sprint(offset)).
 		SetQueryParam("limit", fmt.Sprint(limit)).
+		SetQueryParam("web", fmt.Sprint(true)).
 		SetResult(&msgs).
 		Get(endpoint)
 
