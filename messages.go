@@ -38,6 +38,11 @@ func (m Message) ChatID() ChatID {
 	return fmt.Sprint(m.ConversationID)
 }
 
+func (m Message) UnixTime() time.Time {
+	newTime := m.Timestamp / 1000 >> 0 // remove ms
+	return time.Unix(newTime, 0)
+}
+
 type sendMessageRequest struct {
 	AccountID            AccountID      `json:"account_id,omitempty"`
 	Data                 string         `json:"data,omitempty"`
@@ -119,9 +124,9 @@ func (c *Client) SendMessage(m Message, chatID string) error {
 		m.MimeType = mime
 	}
 
-	timestamp := time.Now().Unix()
 	if m.Timestamp == 0 {
-		m.Timestamp = timestamp
+		// js time in ms
+		m.Timestamp = time.Now().UTC().UnixNano() / 1e6
 	}
 
 	if m.Type == 0 {
@@ -147,7 +152,7 @@ func (c *Client) SendMessage(m Message, chatID string) error {
 		DeviceConversationID: convoID,
 		DeviceID:             deviceID,
 		MessageType:          2,
-		Timestamp:            timestamp,
+		Timestamp:            m.Timestamp,
 		MimeType:             mimetype,
 		Read:                 false,
 		Seen:                 false,
@@ -166,7 +171,7 @@ func (c *Client) SendMessage(m Message, chatID string) error {
 	}
 	fmt.Println("sent message")
 
-	err = c.updateConversation(convoID, encSnippet, timestamp)
+	err = c.updateConversation(convoID, encSnippet, m.Timestamp)
 	if err != nil {
 		return err
 	}
