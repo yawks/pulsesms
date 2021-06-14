@@ -3,7 +3,6 @@ package pulsesms
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"time"
@@ -21,7 +20,16 @@ type WSMessage struct {
 	Message    NotificationMessage `json:"message,omitempty"`
 }
 
-func (c *Client) Stream() {
+func (c *Client) Disconnect() {
+	c.connected = false
+	c.conn.Close()
+	c.conn = nil
+}
+
+func (c *Client) Stream() error {
+	if c.conn != nil {
+		c.Disconnect()
+	}
 
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
@@ -29,22 +37,21 @@ func (c *Client) Stream() {
 	url := fmt.Sprintf("wss://api.pulsesms.app/api/v1/stream?account_id=%s", c.accountID)
 	conn, _, err := websocket.DefaultDialer.Dial(url, nil)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
+	c.conn = conn
 	c.connected = true
-	defer conn.Close()
-	defer func() { c.connected = false }()
+	defer c.Disconnect()
 
 	subscribe := map[string]interface{}{
 		"command":    "subscribe",
 		"identifier": "{\"channel\":\"NotificationsChannel\"}",
 	}
 
-	err = conn.WriteJSON(subscribe)
+	err = c.conn.WriteJSON(subscribe)
 	if err != nil {
-		log.Println("write:", err)
-		return
+		return err
 	}
 
 	done := make(chan struct{})
@@ -52,7 +59,7 @@ func (c *Client) Stream() {
 	go func() {
 		defer close(done)
 		for {
-			_, message, err := conn.ReadMessage()
+			_, message, err := c.conn.ReadMessage()
 			if err != nil {
 				fmt.Println("read:", err)
 				return
@@ -67,20 +74,20 @@ func (c *Client) Stream() {
 	for {
 		select {
 		case <-done:
-			return
+			return nil
 		case <-interrupt:
 			// Cleanly close the connection by sending a close message and then
 			// waiting (with timeout) for the server to close the connection.
-			err := conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+			err := c.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 			if err != nil {
-				log.Println("write close:", err)
-				return
+				fmt.Println("write close:", err)
+                return nil
 			}
 			select {
 			case <-done:
 			case <-time.After(time.Second):
 			}
-			return
+			return nil
 		}
 	}
 }

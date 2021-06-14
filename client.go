@@ -9,6 +9,7 @@ import (
 	"crypto/cipher"
 
 	"github.com/go-resty/resty/v2"
+	"github.com/gorilla/websocket"
 )
 
 type Client struct {
@@ -20,6 +21,7 @@ type Client struct {
 	messageHandler func(Message)
 	Store          *Store
 	connected      bool
+	conn           *websocket.Conn
 }
 
 type accountCrypto struct {
