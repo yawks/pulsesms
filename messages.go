@@ -122,7 +122,10 @@ func (c *Client) SendMessage(m Message, chatID string) error {
 		return fmt.Errorf("invalid chatID")
 	}
 
-	deviceID := generateID()
+    if m.ID == 0 {
+        m.ID = generateID()
+    }
+
 	if m.Snippet == "" {
 		// TODO accept mimetype
 		m.Snippet = fmt.Sprintf("You: %s", m.Data)
@@ -159,7 +162,7 @@ func (c *Client) SendMessage(m Message, chatID string) error {
 		AccountID:            c.accountID,
 		Data:                 encData,
 		DeviceConversationID: convoID,
-		DeviceID:             deviceID,
+		DeviceID:             m.ID,
 		MessageType:          2,
 		Timestamp:            m.Timestamp,
 		MimeType:             mimetype,
