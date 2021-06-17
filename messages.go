@@ -166,8 +166,8 @@ func (c *Client) SendMessage(m Message, chatID string) error {
 		MessageType:          2,
 		Timestamp:            m.Timestamp,
 		MimeType:             mimetype,
-		Read:                 false,
-		Seen:                 false,
+		Read:                 true,
+		Seen:                 true,
 		SentDevice:           1,
 	}
 
