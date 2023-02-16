@@ -1,4 +1,4 @@
-module github.com/treethought/pulsesms
+module github.com/yawks/pulsesms
 
 go 1.16
 
