@@ -99,3 +99,22 @@ func (c *Client) Login(creds BasicCredentials) error {
 
 	return nil
 }
+
+func (c *Client) SetKeyCredentials(accountID AccountID, password string, salt1 string, salt2 string) error {
+	// use salt2 (pepper) to generate the hash
+	hash := hashPasswordSalt(password, []byte(salt2))
+
+	// use salt1 to generate the encryption key
+	keyCreds := KeyCredentials{
+		AccountID:    accountID,
+		PasswordHash: hash,
+		Salt:         salt1,
+	}
+
+	err := c.GenerateKey(keyCreds)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

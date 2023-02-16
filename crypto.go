@@ -98,7 +98,7 @@ func decrypt(block cipher.Block, data string) (string, error) {
 
 	mode.CryptBlocks(ciphertext, ciphertext)
 	content := string(ciphertext)
-	content = strings.TrimSpace(content)
+	content = cleanString(strings.TrimSpace(content))
 	return content, nil
 
 }
@@ -121,6 +121,24 @@ func pkcs7Pad(b []byte, blocksize int) ([]byte, error) {
 	copy(pb[len(b):], bytes.Repeat([]byte{byte(n)}, n))
 	return pb, nil
 }
+
+func cleanString(str string) string {
+	newStr := strings.Replace(str, "\b", "", -1)
+	newStr = strings.Replace(newStr, "\a", "", -1)
+
+	newStr = strings.Replace(newStr, "\x01", "", -1)
+	newStr = strings.Replace(newStr, "\x02", "", -1)
+	newStr = strings.Replace(newStr, "\x03", "", -1)
+	newStr = strings.Replace(newStr, "\x04", "", -1)
+	newStr = strings.Replace(newStr, "\x05", "", -1)
+	newStr = strings.Replace(newStr, "\x06", "", -1)
+	newStr = strings.Replace(newStr, "\x10", "", -1)
+	newStr = strings.Replace(newStr, "\x0e", "", -1)
+	newStr = strings.Replace(newStr, "\x0f", "", -1)
+
+	return newStr
+}
+
 func decryptConversation(block cipher.Block, convo *conversation) (err error) {
 
 	// Removes miliiseconds from timestamp
