@@ -25,7 +25,7 @@ type Chat struct {
 	ID              ChatID
 	Name            string
 	ModifyTag       string
-	UnreadCount     int
+	Read            bool
 	LastMessageTime int64
 	MutedUntil      int64
 	IsMarkedSpam    bool
@@ -43,6 +43,7 @@ func newChat(conv conversation) Chat {
 		Name:            conv.Title,
 		Members:         conv.members(),
 		LastMessageTime: conv.Timestamp,
+		Read:            conv.Read,
 	}
 	return c
 }

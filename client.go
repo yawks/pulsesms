@@ -18,7 +18,7 @@ type Client struct {
 	baseUrl        string
 	apiVersion     string
 	crypto         accountCrypto
-	messageHandler func(Message)
+	messageHandler func(Message, MessageAction)
 	Store          *Store
 	connected      bool
 	conn           *websocket.Conn
@@ -103,7 +103,7 @@ func (c *Client) GetContactByPhone(phone PhoneNumber) (Contact, bool) {
 	return c.Store.getContactByPhone(phone)
 }
 
-func (c *Client) SetMessageHandler(f func(Message)) {
+func (c *Client) SetMessageHandler(f func(Message, MessageAction)) {
 	c.messageHandler = f
 }
 

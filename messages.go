@@ -18,7 +18,8 @@ type Message struct {
 	ID             MessageID      `json:"id,omitempty"`
 	ConversationID conversationID `json:"conversation_id,omitempty"`
 	DeviceID       DeviceID       `json:"device_id,omitempty"`
-	Type           int            `json:"message_type,omitempty"`
+	MessageType    int            `json:"message_type,omitempty"`
+	Type           int            `json:"type,omitempty"`
 	Data           string         `json:"data,omitempty"`
 	Timestamp      int64          `json:"timestamp,omitempty"`
 	MimeType       string         `json:"mime_type,omitempty"`
@@ -44,7 +45,7 @@ func (m Message) UnixTime() time.Time {
 }
 
 func (m Message) Received() bool {
-	return m.Type == 0 || m.Type == 6
+	return m.MessageType == 0 || m.MessageType == 6
 }
 
 func (m Message) Sent() bool {
@@ -122,9 +123,9 @@ func (c *Client) SendMessage(m Message, chatID string) error {
 		return fmt.Errorf("invalid chatID")
 	}
 
-    if m.ID == 0 {
-        m.ID = generateID()
-    }
+	if m.ID == 0 {
+		m.ID = generateID()
+	}
 
 	if m.Snippet == "" {
 		// TODO accept mimetype
@@ -141,8 +142,8 @@ func (c *Client) SendMessage(m Message, chatID string) error {
 		m.Timestamp = time.Now().UTC().UnixNano() / 1e6
 	}
 
-	if m.Type == 0 {
-		m.Type = 2
+	if m.MessageType == 0 {
+		m.MessageType = 2
 	}
 
 	mimetype, err := encrypt(c.crypto.cipher, "text/plain")

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -19,6 +21,18 @@ type WSMessage struct {
 	Identifier string              `json:"identifier,omitempty"`
 	Message    NotificationMessage `json:"message,omitempty"`
 }
+
+type MessageAction int64
+
+const (
+	ReceivedMessage       MessageAction = 0
+	SentMessage                         = 1
+	ReadConversation                    = 2
+	RemovedMessage                      = 3
+	UpdatedConversation                 = 4
+	DismissedNotification               = 5
+	ConnectionError                     = 999
+)
 
 func (c *Client) Disconnect() {
 	c.connected = false
@@ -55,14 +69,19 @@ func (c *Client) Stream() error {
 	}
 
 	done := make(chan struct{})
-
+	isWSOpen := true
 	go func() {
 		defer close(done)
-		for {
+		for isWSOpen {
 			_, message, err := c.conn.ReadMessage()
 			if err != nil {
+				isWSOpen = false
 				fmt.Println("read:", err)
-				return
+				m := Message{}
+				m.ID = -1
+				m.ConversationID = -1
+				go c.messageHandler(m, ConnectionError)
+				break
 			}
 			c.handleMessage(message)
 		}
@@ -81,7 +100,7 @@ func (c *Client) Stream() error {
 			err := c.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 			if err != nil {
 				fmt.Println("write close:", err)
-                return nil
+				return nil
 			}
 			select {
 			case <-done:
@@ -93,38 +112,58 @@ func (c *Client) Stream() error {
 }
 
 func (c *Client) handleMessage(msg []byte) {
+	rId := regexp.MustCompile("\"(id|android_device|device_id|message_type)\":\"(\\d+)\"")
+	finalMsg := rId.ReplaceAllString(string(msg), "\"$1\":$2")
+
 	wm := &WSMessage{}
-	err := json.Unmarshal(msg, wm)
+	err := json.Unmarshal([]byte(finalMsg), wm)
 	if err != nil {
-		fmt.Println(string(msg))
+		if !strings.Contains(string(msg), "ping") {
+			fmt.Println(string(msg))
+		}
 		return
+	}
+
+	if !strings.Contains(string(msg), "ping") {
+		err = nil
 	}
 
 	if wm.Message.Operation == "" {
 		return
 	}
 
-	// fmt.Println("operation:", wm.Message.Operation)
+	fmt.Println("operation:", wm.Message.Operation)
+	m := wm.Message.Content
+	err = decryptMessage(c.crypto.cipher, &m)
+	if err != nil {
+		fmt.Println("failed to decrypt message:", err)
+		return
+	}
+	// update store
+	if m.ConversationID == 0 {
+		m.ConversationID = wm.Message.Content.ID
+	}
+	convo, err := c.getConversation(m.ConversationID)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
 	switch wm.Message.Operation {
 	case "added_message":
-		m := wm.Message.Content
-		err := decryptMessage(c.crypto.cipher, &m)
-		if err != nil {
-			fmt.Println("failed to decrypt message:", err)
-			return
-		}
-		// update store
-		convo, err := c.getConversation(m.ConversationID)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
 		c.Store.setConversation(convo)
-		go c.messageHandler(m)
-
-	case "removed_message":
+		if wm.Message.Content.Type == 0 {
+			go c.messageHandler(m, ReceivedMessage)
+		} else if wm.Message.Content.Type == 2 {
+			go c.messageHandler(m, SentMessage)
+		} else {
+			fmt.Println("Unhandled added_message type")
+		}
 	case "read_conversation":
+		go c.messageHandler(m, ReadConversation)
+	case "removed_message":
 	case "updated_conversation":
+	case "dismissed_notification":
 	}
 
 }
