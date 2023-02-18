@@ -151,6 +151,16 @@ func decryptConversation(block cipher.Block, convo *conversation) (err error) {
 	return nil
 
 }
+
+func decryptContact(block cipher.Block, contact *contact) (err error) {
+
+	contact.Name, err = decrypt(block, contact.Name)
+	contact.PhoneNumber, err = decrypt(block, contact.PhoneNumber)
+
+	return nil
+
+}
+
 func decryptMessage(block cipher.Block, m *Message) (err error) {
 
 	// Removes miliiseconds from timestamp

@@ -77,6 +77,17 @@ func (c *Client) Sync() error {
 	return nil
 }
 
+func (c *Client) SyncContacts() error {
+	contacts, err := c.listContacts()
+	if err != nil {
+		return err
+	}
+	for _, contact := range contacts {
+		c.Store.setContact(contact.PhoneNumber, Contact{PhoneNumber: contact.PhoneNumber, Name: contact.Name})
+	}
+	return nil
+}
+
 func (c *Client) GetChat(chatID ChatID) (Chat, bool) {
 	chat, ok := c.Store.Chats[chatID]
 	if ok {
